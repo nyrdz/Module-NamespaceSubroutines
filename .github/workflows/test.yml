@@ -1,0 +1,78 @@
+name: test
+
+on:
+  push:
+    branches:
+      - "main"
+  pull_request:
+    branches:
+      - "*"
+
+jobs:
+  lint-job:
+    runs-on: ubuntu-latest
+    name: Perl 5.36
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup perl
+        uses: shogo82148/actions-setup-perl@v1
+        with:
+          perl-version: 5.36
+      - name: Install ubi
+        run: mkdir $HOME/bin; curl --silent --location https://raw.githubusercontent.com/houseabsolute/ubi/master/bootstrap/bootstrap-ubi.sh | sh
+      - name: Install omegasort
+        run: $HOME/bin/ubi --project houseabsolute/omegasort --in /usr/local/bin
+      - name: Install precious
+        run: $HOME/bin/ubi --project houseabsolute/precious --in /usr/local/bin
+      - name: Install dependencies
+        run: cpanm -nq --installdeps --with-develop --with-recommends .
+      - name: Cache lint deps
+        uses: actions/cache@v3
+        with:
+          key: lint_deps-5.36
+          path: |
+            ~/bin
+            /opt/hostedtoolcache/perl/5.36.1/x64/lib/site_perl/5.36.1/x86_64-linux
+            /opt/hostedtoolcache/perl/5.36.1/x64/lib/site_perl/5.36.1
+            /opt/hostedtoolcache/perl/5.36.1/x64/lib/5.36.1/x86_64-linux
+            /opt/hostedtoolcache/perl/5.36.1/x64/lib/5.36.1
+      - name: Run precious
+        run: precious lint --all
+  test-job:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        perl:
+          [
+            "5.36.0",
+            "5.34.0",
+            "5.32.0",
+            "5.30.0",
+            "5.28.0",
+            "5.26.0",
+            "5.24.0",
+            "5.22.0",
+            "5.20.0",
+            "5.18.0",
+          ]
+    name: Perl ${{ matrix.perl }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup perl
+        uses: shogo82148/actions-setup-perl@v1
+        with:
+          perl-version: ${{ matrix.perl }}
+      - name: Install dependencies
+        run: cpanm -nq --installdeps --with-recommends .
+      - name: Cache test deps
+        uses: actions/cache@v3
+        with:
+          key: test_deps-${{ matrix.perl }}
+          path: |
+            ~/bin
+            /opt/hostedtoolcache/perl/${{ matrix.perl }}/x64/lib/site_perl/${{ matrix.perl }}/x86_64-linux
+            /opt/hostedtoolcache/perl/${{ matrix.perl }}/x64/lib/site_perl/${{ matrix.perl }}
+            /opt/hostedtoolcache/perl/${{ matrix.perl }}/x64/lib/${{ matrix.perl }}/x86_64-linux
+            /opt/hostedtoolcache/perl/${{ matrix.perl }}/x64/lib/${{ matrix.perl }}
+      - name: Run test
+        run: prove -lr t
