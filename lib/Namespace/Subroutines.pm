@@ -7,7 +7,7 @@ use Carp       qw( carp );
 use File::Find ();
 use feature 'say';
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 my %skip = (
     AUTOLOAD               => 1,
