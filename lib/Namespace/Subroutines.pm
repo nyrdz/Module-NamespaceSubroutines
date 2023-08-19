@@ -1,5 +1,5 @@
 package Namespace::Subroutines;
-use 5.010;
+use v5.18;
 use strict;
 use warnings;
 use attributes;
@@ -20,7 +20,7 @@ sub find {
     my ( $ns, $cb ) = @_;
 
     # 'My::App::Controller' -> 'My/App/Controller'
-    my $ns2 = $ns =~ s{::}{/}gr;
+    my $ns2 = $ns =~ s/::/\//gr;
 
     my @modules;
     foreach my $path (@INC) {
@@ -28,7 +28,7 @@ sub find {
         File::Find::find(
             sub {
                 return unless /\.pm$/;
-                my $name = $File::Find::name =~ s{$path/}{}r;
+                my $name = $File::Find::name =~ s/$path\///r;
                 return unless $name =~ /^$ns2/;
                 push @modules, [ $name, $File::Find::name ];
             },
@@ -49,13 +49,13 @@ sub find {
         require $modname unless defined $INC{$modname};
 
         my $module = $modname;              # 'My/App/Controller/Users.pm'
-        $module =~ s{\.pm$}{};              # 'My/App/Controller/Users'
-        $module =~ s{/}{::}g;               # 'My::App::Controller::Users'
+        $module =~ s/\.pm$//;               # 'My/App/Controller/Users'
+        $module =~ s/\//::/g;               # 'My::App::Controller::Users'
         $module .= '::';                    # 'My::App::Controller::Users::'
         my $table = '%' . $module;          # '%My::App::Controller::Users::'
 
         ## no critic (BuiltinFunctions::ProhibitStringyEval)
-        my @symbols     = split( m{\|}, eval "join('|', keys $table)" );
+        my @symbols     = split( /\|/, eval "join('|', keys $table)" );
         my @subroutines = grep { defined &{ $module . $_ } } @symbols;
         my %subroutines;
 
@@ -67,7 +67,7 @@ sub find {
         close $fh or ( carp "error closing $!" and next );
 
         # 'My::App::Controller::Users::' -> 'Users'
-        $module =~ s{^$ns\::(.+)::$}{$1};
+        $module =~ s/^$ns\::(.+)::$/$1/;
 
         foreach my $sub (@subroutines) {
             next if $skip{$sub};
