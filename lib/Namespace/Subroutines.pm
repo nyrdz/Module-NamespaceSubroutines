@@ -52,10 +52,12 @@ sub find {
         $module =~ s/\.pm$//;               # 'My/App/Controller/Users'
         $module =~ s/\//::/g;               # 'My::App::Controller::Users'
         $module .= '::';                    # 'My::App::Controller::Users::'
-        my $table = '%' . $module;          # '%My::App::Controller::Users::'
 
-        ## no critic (BuiltinFunctions::ProhibitStringyEval)
-        my @symbols     = split( /\|/, eval "join('|', keys $table)" );
+        my @symbols = do {
+            ## no critic (TestingAndDebugging::ProhibitNoStrict)
+            no strict 'refs';
+            keys %{*$module};
+        };
         my @subroutines = grep { defined &{ $module . $_ } } @symbols;
         my %subroutines;
 
