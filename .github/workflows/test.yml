@@ -26,13 +26,6 @@ jobs:
         run: $HOME/bin/ubi --project houseabsolute/precious --in /usr/local/bin
       - name: Install dependencies
         run: cpm install --without-test --with-develop
-      - name: Cache lint deps
-        uses: actions/cache@v3
-        with:
-          key: lint_deps-5.36
-          path: |
-            local
-            ~/bin
       - name: Run precious
         run: precious lint --all
   test-job:
@@ -61,12 +54,5 @@ jobs:
           perl-version: ${{ matrix.perl }}
       - name: Install dependencies
         run: cpm install
-      - name: Cache test deps
-        uses: actions/cache@v3
-        with:
-          key: test_deps-${{ matrix.perl }}
-          path: |
-            local
-            ~/bin
       - name: Run test
         run: prove -lr t
