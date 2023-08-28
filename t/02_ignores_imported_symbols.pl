@@ -1,9 +1,9 @@
 use strict;
 use warnings;
-use Test2::V0              qw( done_testing ok );
-use Namespace::Subroutines ();
+use Test2::V0 qw( done_testing ok );
 
 use lib 't/lib';
+use Namespace::Subroutines ();
 
 my %subroutines;
 Namespace::Subroutines::find(
